@@ -1,0 +1,11 @@
+# Default GitHub Account
+Host github.com
+    HostName github.com
+    User git
+    IdentityFile ~/.ssh/id_ed25519
+
+# Second GitHub Account for Specific Projects
+Host github-second
+    HostName github.com
+    User git
+    IdentityFile ~/.ssh/id_rsa
