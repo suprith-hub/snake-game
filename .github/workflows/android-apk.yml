@@ -12,16 +12,27 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Install Dependencies
+        run: |
+          npm install
+          npx expo install
+
       - name: Set up JDK
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Build APK
+      - name: Clean and Build APK
         run: |
           cd android
-          ./gradlew assembleDebug
+          ./gradlew clean
+          ./gradlew assembleDebug --info --stacktrace
 
       - name: Upload APK to transfer.sh
         run: |
