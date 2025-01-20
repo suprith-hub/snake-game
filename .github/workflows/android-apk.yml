@@ -42,22 +42,37 @@ jobs:
         run: |
           apk_path="android/app/build/outputs/apk/debug/app-debug.apk"
           DROPBOX_ACCESS_TOKEN="${{ secrets.DROPBOX_ACCESS_TOKEN }}"
-          RESPONSE=$(curl -X POST https://content.dropboxapi.com/2/files/upload \
+
+          RESPONSE=$(curl -s -X POST https://content.dropboxapi.com/2/files/upload \
             --header "Authorization: Bearer $DROPBOX_ACCESS_TOKEN" \
             --header "Dropbox-API-Arg: {\"path\": \"/app-debug.apk\",\"mode\": \"overwrite\",\"autorename\": false,\"mute\": false}" \
             --header "Content-Type: application/octet-stream" \
             --data-binary @$apk_path)
 
-          echo "File uploaded to Dropbox"
+          echo "Dropbox upload response: $RESPONSE"
 
-          DROPBOX_FILE_PATH=$(echo $RESPONSE | jq -r '.path_display')
+          # Extract path_display safely
+          DROPBOX_FILE_PATH=$(echo "$RESPONSE" | jq -r '.path_display' 2>/dev/null || echo "")
 
-          SHARE_RESPONSE=$(curl -X POST https://api.dropboxapi.com/2/sharing/create_shared_link_with_settings \
+          if [ -z "$DROPBOX_FILE_PATH" ]; then
+            echo "Failed to extract file path from response"
+            exit 1
+          fi
+
+          SHARE_RESPONSE=$(curl -s -X POST https://api.dropboxapi.com/2/sharing/create_shared_link_with_settings \
             --header "Authorization: Bearer $DROPBOX_ACCESS_TOKEN" \
             --header "Content-Type: application/json" \
             --data "{\"path\": \"$DROPBOX_FILE_PATH\", \"settings\": {\"requested_visibility\": \"public\"}}")
 
-          DROPBOX_DOWNLOAD_LINK=$(echo $SHARE_RESPONSE | jq -r '.url' | sed 's?dl=0?dl=1?')
+          echo "Dropbox share response: $SHARE_RESPONSE"
+
+          # Extract download link safely
+          DROPBOX_DOWNLOAD_LINK=$(echo "$SHARE_RESPONSE" | jq -r '.url' 2>/dev/null | sed 's?dl=0?dl=1?' || echo "")
+
+          if [ -z "$DROPBOX_DOWNLOAD_LINK" ]; then
+            echo "Failed to extract download link from response"
+            exit 1
+          fi
 
           echo "APK_DROPBOX_URL=$DROPBOX_DOWNLOAD_LINK" >> $GITHUB_ENV
           echo "APK download link: $DROPBOX_DOWNLOAD_LINK"
