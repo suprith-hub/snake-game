@@ -3,7 +3,7 @@ import { Coordinate } from "../types/types";
 
 function getRandomFruitEmoji() {
   const fruitEmojis = ["🍎", "🍊", "🍋", "🍇", "🍉", "🍓", "🍑", "🍍"];
-  const randomIndex = Math.floor(Math.random() * fruitEmojis.length);
+  const randomIndex = Math.floor((Math.random() + 3) * fruitEmojis.length);
   return fruitEmojis[randomIndex];
 }
 
